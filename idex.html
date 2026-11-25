@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>VLM PLAY</title>
+  <style>
+    :root {
+      --bg-main: #060808;
+      --bg-card: #111615;
+      --bg-elevated: #18201e;
+      --text-main: #ffffff;
+      --text-muted: #9aa6a2;
+      --border-subtle: rgba(255, 255, 255, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #060808;
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      padding-bottom: 112px;
+      overflow-x: hidden;
+    }
+
+    .lg-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #ffffff;
+      text-decoration: none;
+      cursor: pointer;
+      user-select: none;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.16) 0%,
+        rgba(255, 255, 255, 0.07) 100%
+      );
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.36),
+        inset 0 1px 1px rgba(255, 255, 255, 0.32),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.1);
+      transition: transform 0.14s ease, background 0.16s ease, border-color 0.16s ease;
+    }
+
+    .lg-btn:active {
+      transform: scale(0.95);
+    }
+
+    .lg-btn.primary {
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.3) 0%,
+        rgba(255, 255, 255, 0.16) 100%
+      );
+      border-color: rgba(255, 255, 255, 0.42);
+      box-shadow:
+        0 6px 14px rgba(0, 0, 0, 0.4),
+        inset 0 1px 1.5px rgba(255, 255, 255, 0.55);
+    }
+
+    .lg-btn.active {
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.32) 0%,
+        rgba(255, 255, 255, 0.18) 100%
+      );
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .lg-btn.saved-solid {
+      background: #ffffff;
+      color: #060808;
+      border-color: #ffffff;
+    }
+
+    .lg-btn.sm {
+      padding: 6px 12px;
+      font-size: 11.5px;
+    }
+
+    .lg-btn.top-icon {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+    }
+
+    .lg-btn svg {
+      width: 17px;
+      height: 17px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 13px 18px;
+      background: rgba(6, 8, 8, 0.86);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.65);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .clock-pill {
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .app-main {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 16px 18px 20px;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .cr-showcase {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      border-radius: 22px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .cr-showcase::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cr-slide {
+      position: relative;
+      flex: 0 0 100%;
+      width: 100%;
+      min-height: 375px;
+      scroll-snap-align: start;
+      display: flex;
+      align-items: flex-end;
+      padding: 22px 18px 24px;
+      background-color: #101514;
+      background-size: cover;
+      background-position: center top;
+      cursor: pointer;
+      contain: layout paint;
+    }
+
+    .cr-slide::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(6, 8, 8, 0.98) 0%,
+        rgba(6, 8, 8, 0.72) 48%,
+        rgba(6, 8, 8, 0.18) 100%
+      );
+      z-index: 0;
+    }
+
+    .cr-slide-content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 660px;
+    }
+
+    .cr-meta-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 9px;
+    }
+
+    .cr-chip {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .cr-slide-title {
+      font-size: clamp(25px, 6vw, 36px);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .cr-genres {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 9px;
+    }
+
+    .cr-desc {
+      font-size: 13px;
+      line-height: 1.44;
+      color: rgba(255, 255, 255, 0.84);
+      margin-bottom: 13px;
+    }
+
+    .cr-actions {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    .dots-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 7px;
+      margin-top: 11px;
+      margin-bottom: 24px;
+    }
+
+    .cap-dot {
+      width: 10px;
+      height: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.14);
+      cursor: pointer;
+      transition: width 0.2s ease, background 0.2s ease;
+    }
+
+    .cap-dot.active {
+      width: 28px;
+      background: #ffffff;
+      border-color: #ffffff;
+    }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .section-sub {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .netflix-row {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      padding-bottom: 8px;
+      margin-bottom: 22px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      contain: layout style;
+    }
+
+    .netflix-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .netflix-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    /* Tarjetas inferiores: solo póster */
+    .poster-only-card {
+      position: relative;
+      flex: 0 0 148px;
+      aspect-ratio: 2 / 3;
+      scroll-snap-align: start;
+      border-radius: 16px;
+      overflow: hidden;
+      background-color: var(--bg-card);
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      content-visibility: auto;
+      contain-intrinsic-size: 148px 222px;
+      contain: layout paint;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .poster-only-card:active {
+      transform: scale(0.97);
+    }
+
+    .netflix-grid .poster-only-card {
+      flex: none;
+      width: 100%;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 12px 15px;
+      margin-bottom: 16px;
+    }
+
+    .search-prefix {
+      display: inline-flex;
+      align-items: center;
+      color: var(--text-muted);
+    }
+
+    .search-prefix svg {
+      width: 17px;
+      height: 17px;
+      fill: currentColor;
+    }
+
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 15px;
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .filter-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+    }
+
+    .category-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 9px;
+      margin-bottom: 13px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .category-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 36px 20px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px dashed var(--border-subtle);
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .detail-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(0, 0, 0, 0.88);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .detail-modal.open {
+      display: flex;
+    }
+
+    .detail-box {
+      width: 100%;
+      max-width: 440px;
+      max-height: 92vh;
+      overflow-y: auto;
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 24px;
+      padding: 16px;
+    }
+
+    .detail-poster-frame {
+      width: 100%;
+      aspect-ratio: 8.5 / 11;
+      max-height: 330px;
+      border-radius: 18px;
+      background-color: #0d1211;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 14px;
+    }
+
+    .detail-info h2 {
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .detail-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .detail-desc-wrap {
+      margin-top: 10px;
+    }
+
+    .detail-desc {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .read-more-btn {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 6px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .detail-cta-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn-visit-big {
+      flex: 1;
+      padding: 13px 20px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .btn-save-icon-only {
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .btn-save-icon-only svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Ventana flotante pura Liquid Glass */
+    .msg-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 65;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .msg-overlay.open {
+      display: flex;
+    }
+
+    .msg-float-window {
+      width: 100%;
+      max-width: 336px;
+      border-radius: 28px;
+      padding: 18px;
+      color: #ffffff;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.16) 0%,
+        rgba(255, 255, 255, 0.06) 100%
+      );
+      backdrop-filter: blur(22px) saturate(135%);
+      -webkit-backdrop-filter: blur(22px) saturate(135%);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      box-shadow:
+        0 20px 44px rgba(0, 0, 0, 0.65),
+        inset 0 1.5px 2px rgba(255, 255, 255, 0.42),
+        inset 0 -1px 1.5px rgba(255, 255, 255, 0.14);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Imagen con bordes redondeados y difuminado suave en los bordes */
+    .msg-blur-art-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      border-radius: 22px;
+      overflow: hidden;
+    }
+
+    .msg-blur-art {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 22px;
+      filter: blur(0.4px);
+      -webkit-mask-image: radial-gradient(ellipse 84% 82% at 50% 50%, #000 68%, rgba(0, 0, 0, 0.35) 90%, transparent 100%);
+      mask-image: radial-gradient(ellipse 84% 82% at 50% 50%, #000 68%, rgba(0, 0, 0, 0.35) 90%, transparent 100%);
+    }
+
+    .msg-social-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      width: 100%;
+    }
+
+    .social-glass-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      text-decoration: none;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(255, 255, 255, 0.08) 100%
+      );
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      box-shadow:
+        0 8px 18px rgba(0, 0, 0, 0.38),
+        inset 0 1px 1.5px rgba(255, 255, 255, 0.42);
+      transition: transform 0.15s ease, background 0.18s ease;
+    }
+
+    .social-glass-btn:active {
+      transform: scale(0.93);
+    }
+
+    .social-glass-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    .msg-credit-text {
+      text-align: center;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.86);
+      padding: 0 4px;
+    }
+
+    .site-footer {
+      max-width: 1040px;
+      margin: 12px auto 0;
+      padding: 18px 18px 10px;
+      border-top: 1px solid var(--border-subtle);
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .dock-wrapper {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 16px;
+      z-index: 40;
+      display: flex;
+      justify-content: center;
+      padding: 0 12px;
+      pointer-events: none;
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+      transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease;
+    }
+
+    .dock-wrapper.dock-hidden {
+      transform: translate3d(0, calc(100% + 26px), 0);
+      opacity: 0;
+    }
+
+    .glass-navbar {
+      pointer-events: auto;
+      position: relative;
+      width: 372px;
+      max-width: 100%;
+      height: 74px;
+      border-radius: 999px;
+      overflow: hidden;
+      isolation: isolate;
+      background: linear-gradient(
+        180deg,
+        rgba(38, 42, 42, 0.84) 0%,
+        rgba(20, 23, 23, 0.9) 100%
+      );
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow:
+        0 14px 30px rgba(0, 0, 0, 0.68),
+        inset 0 1px 1px rgba(255, 255, 255, 0.24);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+      padding: 5px;
+      touch-action: none;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .glass-navbar:active {
+      cursor: grabbing;
+    }
+
+    .nav-item {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: rgba(255, 255, 255, 0.58);
+      transition: color 0.18s ease;
+      pointer-events: none;
+    }
+
+    .nav-item.active {
+      color: #ffffff;
+    }
+
+    .nav-item svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+      transition: transform 0.2s ease;
+    }
+
+    .nav-item.active svg {
+      transform: scale(1.05);
+    }
+
+    .nav-item span {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .liquid-lens {
+      position: absolute;
+      top: 5px;
+      left: 0;
+      width: 86px;
+      height: 62px;
+      border-radius: 999px;
+      z-index: 1;
+      pointer-events: none;
+      will-change: transform;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.24) 0%,
+        rgba(255, 255, 255, 0.1) 52%,
+        rgba(255, 255, 255, 0.16) 100%
+      );
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.34),
+        inset 0 1.5px 2px rgba(255, 255, 255, 0.45),
+        inset 0 -1px 1.5px rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      transition:
+        width 0.18s ease,
+        height 0.18s ease,
+        top 0.18s ease;
+    }
+
+    .glass-navbar.dragging .liquid-lens {
+      width: 92px;
+      height: 68px;
+      top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span>VLM PLAY</span>
+    </div>
+
+    <div class="topbar-right">
+      <span class="clock-pill" id="live-clock">--:--</span>
+
+      <button type="button" class="lg-btn top-icon" id="btn-messages" aria-label="Canales de Velmora" title="Canales de Velmora">
+        <svg viewBox="0 0 24 24">
+          <path d="M21.426 2.574a1.25 1.25 0 0 0-1.298-.28L2.82 9.18a1.25 1.25 0 0 0-.094 2.288l6.87 3.162 3.162 6.87a1.25 1.25 0 0 0 2.288-.094l6.886-17.308a1.25 1.25 0 0 0-.506-1.524ZM10.97 13.798l7.326-7.326-4.738 11.91-2.588-4.584Zm-.768-.768L5.618 10.44l11.91-4.737-7.326 7.327Z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="msg-overlay" id="msg-overlay" onclick="closeMessagesModal(event)">
+    <div class="msg-float-window" id="msg-float-window" onclick="event.stopPropagation()">
+      <div class="msg-blur-art-wrap">
+        <img
+          src="https://i.ibb.co/ksbgDXRW/47-sin-t-tulo-20261124184646.png"
+          alt="VLM PLAY Velmora"
+          class="msg-blur-art"
+          loading="lazy"
+        />
+      </div>
+
+      <div class="msg-social-row">
+        <a
+          class="social-glass-btn"
+          href="https://t.me/fylio_app"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Telegram"
+          title="Telegram"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701h-.002l.002.001-.314 4.692c.46 0 .663-.211.921-.46l2.211-2.15 4.599 3.397c.848.467 1.457.227 1.668-.785l3.019-14.228c.309-1.239-.473-1.8-1.282-1.434z"/>
+          </svg>
+        </a>
+
+        <a
+          class="social-glass-btn"
+          href="https://youtube.com/@velmora_vlm?si=osrED-UYz4M0c4yi"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="YouTube"
+          title="YouTube"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M21.582 7.186a2.75 2.75 0 0 0-1.936-1.947C17.938 4.78 12 4.78 12 4.78s-5.938 0-7.646.459A2.75 2.75 0 0 0 2.418 7.186 28.83 28.83 0 0 0 1.96 12a28.83 28.83 0 0 0 .458 4.814 2.75 2.75 0 0 0 1.936 1.947c1.708.459 7.646.459 7.646.459s5.938 0 7.646-.459a2.75 2.75 0 0 0 1.936-1.947A28.83 28.83 0 0 0 22.04 12a28.83 28.83 0 0 0-.458-4.814ZM10.16 14.955V9.045L15.272 12l-5.112 2.955Z"/>
+          </svg>
+        </a>
+
+        <a
+          class="social-glass-btn"
+          href="https://whatsapp.com/channel/0029VbCmHdH3bbV2XBOSlT2h"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="WhatsApp"
+          title="WhatsApp"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M12.004 2.004a9.953 9.953 0 0 0-8.52 15.07L2 22l5.052-1.325a9.956 9.956 0 0 0 4.952 1.321h.004c5.504 0 9.984-4.48 9.986-9.984a9.93 9.93 0 0 0-2.923-7.065 9.934 9.934 0 0 0-7.069-2.923Zm5.822 14.212c-.244.687-1.418 1.314-1.954 1.398-.52.082-1.178.117-1.894-.11-.437-.139-1-.325-1.724-.637-3.035-1.311-5.017-4.367-5.169-4.569-.152-.202-1.236-1.644-1.236-3.136 0-1.492.782-2.226 1.06-2.53.278-.304.607-.38.809-.38.202 0 .405.002.582.011.187.009.437-.071.684.522.253.608.859 2.099.934 2.251.076.152.126.329.025.531-.101.202-.152.329-.304.506-.152.177-.319.396-.456.532-.152.152-.31.317-.133.621.177.304.786 1.296 1.688 2.099 1.16 1.034 2.138 1.354 2.442 1.506.304.152.481.127.658-.076.177-.202.759-.885.961-1.189.202-.304.405-.253.683-.152.278.101 1.771.835 2.075.987.304.152.506.228.582.354.076.127.076.735-.168 1.422Z"/>
+          </svg>
+        </a>
+      </div>
+
+      <p class="msg-credit-text">
+        VLM PLAY es desarrollado por Velmora. Síguenos ahí para que estén informados de todo.
+      </p>
+    </div>
+  </div>
+
+  <main class="app-main">
+    <section class="view active" id="view-home">
+      <div class="cr-showcase" id="recent-showcase"></div>
+      <div class="dots-indicator" id="recent-dots" aria-label="Indicadores de opciones"></div>
+
+      <div class="section-title">
+        <span>Peliculas</span>
+        <span class="section-sub" id="movies-count"></span>
+      </div>
+      <div class="netflix-row" id="movies-row"></div>
+
+      <div class="section-title">
+        <span>Series</span>
+        <span class="section-sub" id="series-count"></span>
+      </div>
+      <div class="netflix-row" id="series-row"></div>
+
+      <div id="years-sections"></div>
+    </section>
+
+    <section class="view" id="view-search">
+      <div class="section-title">
+        <span>Buscar</span>
+      </div>
+      <div class="search-box">
+        <span class="search-prefix">
+          <svg viewBox="0 0 24 24">
+            <path d="M10.5 3a7.5 7.5 0 1 0 4.732 13.318l4.225 4.225a1 1 0 0 0 1.414-1.414l-4.225-4.225A7.5 7.5 0 0 0 10.5 3Zm0 2a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11Z"/>
+          </svg>
+        </span>
+        <input type="text" id="search-input" placeholder="Buscar por nombre, tipo, categoria o ano..." autocomplete="off" />
+      </div>
+      <div class="netflix-grid" id="search-grid"></div>
+    </section>
+
+    <section class="view" id="view-explore">
+      <div class="section-title">
+        <span>Explorar</span>
+      </div>
+
+      <div class="filter-label">Tipo</div>
+      <div class="category-bar" id="type-bar"></div>
+
+      <div class="filter-label">Categorias</div>
+      <div class="category-bar" id="category-bar"></div>
+
+      <div class="filter-label">Ano</div>
+      <div class="category-bar" id="year-bar"></div>
+
+      <div class="netflix-grid" id="explore-grid"></div>
+    </section>
+
+    <section class="view" id="view-saved">
+      <div class="section-title">
+        <span>Guardados</span>
+        <span class="section-sub" id="saved-count"></span>
+      </div>
+      <div class="netflix-grid" id="saved-grid"></div>
+    </section>
+
+    <footer class="site-footer">
+      <div>© 2026 VLM PLAY.</div>
+      <div>VLM (Velmora) · Developed by Velmora</div>
+    </footer>
+  </main>
+
+  <div class="detail-modal" id="detail-modal" onclick="closeDetail(event)">
+    <div class="detail-box" onclick="event.stopPropagation()">
+      <div class="detail-poster-frame" id="detail-poster"></div>
+      <div class="detail-info" id="detail-info"></div>
+    </div>
+  </div>
+
+  <div class="dock-wrapper" id="dock-wrapper">
+    <nav class="glass-navbar" id="navbar" aria-label="Navegacion principal">
+      <div class="liquid-lens" id="lens"></div>
+
+      <div class="nav-item active" data-index="0" data-view="view-home">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3.172 3.293 11.88a1 1 0 0 0 .707 1.707H6v6.414A1.5 1.5 0 0 0 7.5 21.5h3v-5.5h3v5.5h3a1.5 1.5 0 0 0 1.5-1.5v-6.414h2a1 1 0 0 0 .707-1.707L12 3.172Z"/>
+        </svg>
+        <span>Inicio</span>
+      </div>
+
+      <div class="nav-item" data-index="1" data-view="view-search">
+        <svg viewBox="0 0 24 24">
+          <path d="M10.5 3a7.5 7.5 0 1 0 4.732 13.318l4.225 4.225a1 1 0 0 0 1.414-1.414l-4.225-4.225A7.5 7.5 0 0 0 10.5 3Zm0 2a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11Z"/>
+        </svg>
+        <span>Buscar</span>
+      </div>
+
+      <div class="nav-item" data-index="2" data-view="view-explore">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm3.94 6.06-2.12 5.3a1 1 0 0 1-.46.46l-5.3 2.12 2.12-5.3a1 1 0 0 1 .46-.46Z"/>
+        </svg>
+        <span>Explorar</span>
+      </div>
+
+      <div class="nav-item" data-index="3" data-view="view-saved">
+        <svg viewBox="0 0 24 24">
+          <path d="M6.5 3h11A1.5 1.5 0 0 1 19 4.5v16.19a.75.75 0 0 1-1.22.58L12 16.65l-5.78 4.62A.75.75 0 0 1 5 20.69V4.5A1.5 1.5 0 0 1 6.5 3Z"/>
+        </svg>
+        <span>Guardados</span>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Carga los archivos externos y registra su tipo -->
+  <script>
+    window.__TAGGED_ITEMS__ = [];
+
+    function attachSourceTracker(sourceType) {
+      const beforeList = Array.isArray(window.CATALOG) ? [...window.CATALOG] : [];
+      return function flushSource() {
+        const afterList = Array.isArray(window.CATALOG) ? window.CATALOG : [];
+        if (afterList.length > beforeList.length) {
+          for (let i = beforeList.length; i < afterList.length; i++) {
+            window.__TAGGED_ITEMS__.push({
+              raw: afterList[i],
+              sourceType
+            });
+          }
+        } else if (afterList.length > 0 && window.__TAGGED_ITEMS__.length === 0) {
+          afterList.forEach(raw => {
+            window.__TAGGED_ITEMS__.push({ raw, sourceType });
+          });
+        }
+      };
+    }
+
+    window.__flushPeliculas = attachSourceTracker("Película");
+  </script>
+  <script src="peliculas.js" onload="window.__flushPeliculas && window.__flushPeliculas()"></script>
+
+  <script>
+    if (window.__flushPeliculas) { window.__flushPeliculas(); window.__flushPeliculas = null; }
+    window.__flushSerie = attachSourceTracker("Serie");
+  </script>
+  <script src="serie.js" onload="window.__flushSerie && window.__flushSerie()"></script>
+
+  <!-- Motor optimizado de la plataforma -->
+  <script>
+    if (window.__flushPeliculas) { window.__flushPeliculas(); window.__flushPeliculas = null; }
+    if (window.__flushSerie) { window.__flushSerie(); window.__flushSerie = null; }
+
+    const ALLOWED_CATEGORIES = [
+      "Acción",
+      "Aventura",
+      "Comedia",
+      "Drama",
+      "Terror",
+      "Romance",
+      "Ciencia ficción",
+      "Fantasía",
+      "Suspenso",
+      "Misterio",
+      "Animación",
+      "Documental",
+      "Musical",
+      "Crimen"
+    ];
+
+    function stripAccents(str) {
+      return String(str || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toLowerCase();
+    }
+
+    const CATEGORY_LOOKUP = new Map(
+      ALLOWED_CATEGORIES.map(cat => [stripAccents(cat), cat])
+    );
+
+    function normalizeCategories(rawCats) {
+      if (!Array.isArray(rawCats)) return [];
+      const set = new Set();
+      for (let i = 0; i < rawCats.length; i++) {
+        const match = CATEGORY_LOOKUP.get(stripAccents(rawCats[i]));
+        if (match) set.add(match);
+      }
+      return Array.from(set);
+    }
+
+    function resolveType(item, sourceType) {
+      const rawTipo = stripAccents(item.tipo || item.type || "");
+      if (rawTipo.includes("serie")) return "Serie";
+      if (rawTipo.includes("pelicula")) return "Película";
+      if (sourceType === "Serie" || sourceType === "Película") return sourceType;
+      return "Película";
+    }
+
+    function extractYear(dateStr, rawYear) {
+      if (rawYear) {
+        const m4 = String(rawYear).match(/\b(19|20)\d{2}\b/);
+        if (m4) return m4[0];
+      }
+      if (!dateStr) return "Sin ano";
+      const parts = String(dateStr).trim().split("/");
+      if (parts.length === 3) {
+        let y = parseInt(parts[2], 10);
+        if (!Number.isNaN(y)) {
+          if (y < 100) y += y >= 70 ? 1900 : 2000;
+          return String(y);
+        }
+      }
+      const m = String(dateStr).match(/\b(19|20)\d{2}\b/);
+      return m ? m[0] : "Sin ano";
+    }
+
+    function parseDateToTimestamp(dateStr) {
+      if (!dateStr) return 0;
+      const parts = String(dateStr).trim().split("/");
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        let year = parseInt(parts[2], 10);
+        if (year < 100) year += year >= 70 ? 1900 : 2000;
+        const d = new Date(year, month, day);
+        return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+      }
+      const fallback = new Date(dateStr).getTime();
+      return Number.isNaN(fallback) ? 0 : fallback;
+    }
+
+    const SOURCE_ENTRIES = window.__TAGGED_ITEMS__.length
+      ? window.__TAGGED_ITEMS__
+      : (Array.isArray(window.CATALOG) ? window.CATALOG.map(raw => ({ raw, sourceType: null })) : []);
+
+    const ITEMS = (() => {
+      const seen = new Set();
+      const result = [];
+      for (let idx = 0; idx < SOURCE_ENTRIES.length; idx++) {
+        const { raw, sourceType } = SOURCE_ENTRIES[idx];
+        const item = raw || {};
+        const title = item.titulo || "Sin titulo";
+        const fecha = item.fecha || "";
+        const tipo = resolveType(item, sourceType);
+        const normKey = `${stripAccents(title)}__${stripAccents(tipo)}__${stripAccents(fecha)}`;
+
+        if (seen.has(normKey)) continue;
+        seen.add(normKey);
+
+        const genres = normalizeCategories(item.categorias);
+        const year = extractYear(fecha, item.ano || item.anio || item.year);
+        result.push({
+          id: result.length + 1,
+          title,
+          posterUrl: item.portada || "",
+          description: item.descripcion || "",
+          genres,
+          type: tipo,
+          year,
+          date: fecha,
+          watchUrl: item.url || "#",
+          normKey,
+          legacyKey: `${title}__${tipo}__${fecha}`,
+          timestamp: parseDateToTimestamp(fecha),
+          searchBlob: stripAccents(`${title} ${tipo} ${year} ${fecha} ${genres.join(" ")}`)
+        });
+      }
+      return result;
+    })();
+
+    const ITEMS_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
+
+    const SORTED_ITEMS = [...ITEMS].sort((a, b) => {
+      const diff = b.timestamp - a.timestamp;
+      return diff !== 0 ? diff : b.id - a.id;
+    });
+
+    const EXPLORE_TYPES = ["Todos", "Película", "Serie"];
+    const EXPLORE_CATEGORIES = ["Todas", ...ALLOWED_CATEGORIES];
+    const YEARS_SORTED = [
+      ...new Set(SORTED_ITEMS.map(i => i.year).filter(y => y !== "Sin ano"))
+    ].sort((a, b) => Number(b) - Number(a));
+    const EXPLORE_YEARS = ["Todos", ...YEARS_SORTED, ...(SORTED_ITEMS.some(i => i.year === "Sin ano") ? ["Sin ano"] : [])];
+
+    const CACHE_NAME = "vlmplay-cache-v1";
+    const SAVED_CACHE_KEY = "/__vlmplay_saved_keys__";
+    const STORAGE_KEY = "vlmplay_saved_keys_v1";
+
+    const BOOKMARK_SVG = `<svg viewBox="0 0 24 24"><path d="M6.5 3h11A1.5 1.5 0 0 1 19 4.5v16.19a.75.75 0 0 1-1.22.58L12 16.65l-5.78 4.62A.75.75 0 0 1 5 20.69V4.5A1.5 1.5 0 0 1 6.5 3Z"/></svg>`;
+
+    const clockEl = document.getElementById("live-clock");
+    function updateClock() {
+      const now = new Date();
+      clockEl.textContent = now.toLocaleTimeString("es-NI", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
+      const msToNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds() + 50;
+      setTimeout(updateClock, Math.max(1000, msToNextMinute));
+    }
+    updateClock();
+
+    function getRecentUniqueUpToFour() {
+      if (!SORTED_ITEMS.length) return [];
+      const now = new Date();
+      const endOfToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23, 59, 59, 999
+      ).getTime();
+
+      const eligible = SORTED_ITEMS.filter(item => item.timestamp > 0 && item.timestamp <= endOfToday);
+      const pool = eligible.length ? eligible : SORTED_ITEMS;
+      return pool.slice(0, 4);
+    }
+
+    let selectedType = "Todos";
+    let selectedCategory = "Todas";
+    let selectedYear = "Todos";
+    let savedSet = new Set();
+
+    const dirtyViews = {
+      home: true,
+      search: true,
+      explore: true,
+      saved: true
+    };
+
+    function isItemSaved(item) {
+      return savedSet.has(item.normKey) || savedSet.has(item.legacyKey);
+    }
+
+    async function persistSavedKeys() {
+      const arr = Array.from(savedSet);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+      } catch (_) {}
+
+      if ("caches" in window) {
+        try {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(
+            SAVED_CACHE_KEY,
+            new Response(JSON.stringify(arr), {
+              headers: { "Content-Type": "application/json" }
+            })
+          );
+        } catch (_) {}
+      }
+    }
+
+    async function loadSavedKeys() {
+      let keys = [];
+      try {
+        keys = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      } catch (_) {
+        keys = [];
+      }
+
+      if ("caches" in window) {
+        try {
+          const cache = await caches.open(CACHE_NAME);
+          const cachedRes = await cache.match(SAVED_CACHE_KEY);
+          if (cachedRes) {
+            const cachedKeys = await cachedRes.json();
+            if (Array.isArray(cachedKeys) && cachedKeys.length >= keys.length) {
+              keys = cachedKeys;
+            }
+          }
+        } catch (_) {}
+      }
+
+      savedSet = new Set(Array.isArray(keys) ? keys : []);
+    }
+
+    function syncSavedButtonsForId(id, savedState) {
+      document.querySelectorAll(`[data-save-id="${id}"]`).forEach(btn => {
+        btn.classList.toggle("active", savedState);
+        if (btn.dataset.saveKind === "bookmark-solid") {
+          btn.classList.toggle("saved-solid", savedState);
+          btn.title = savedState ? "Guardado" : "Guardar";
+        } else if (btn.dataset.saveKind === "text") {
+          btn.textContent = savedState ? "Guardado" : "Guardar";
+        }
+      });
+    }
+
+    function toggleSaved(id) {
+      const item = ITEMS_BY_ID.get(id);
+      if (!item) return;
+
+      const wasSaved = isItemSaved(item);
+      if (wasSaved) {
+        savedSet.delete(item.normKey);
+        savedSet.delete(item.legacyKey);
+      } else {
+        savedSet.delete(item.legacyKey);
+        savedSet.add(item.normKey);
+      }
+
+      const nowSaved = !wasSaved;
+      persistSavedKeys();
+      syncSavedButtonsForId(id, nowSaved);
+
+      dirtyViews.saved = true;
+      if (activeIndex === 3) {
+        renderSaved();
+      }
+    }
+
+    function safeBgUrl(url) {
+      if (!url) return "none";
+      return `url('${String(url).replace(/'/g, "%27")}')`;
+    }
+
+    function createTopSlide(item, slotIndex) {
+      const saved = isItemSaved(item);
+      const genresText = item.genres.join(", ");
+      const shortDesc = item.description.length > 130
+        ? `${item.description.slice(0, 130).trim()}...`
+        : item.description;
+
+      return `
+        <article class="cr-slide" data-slot="${slotIndex}" style="background-image: ${safeBgUrl(item.posterUrl)};" onclick="openDetail(${item.id})">
+          <div class="cr-slide-content">
+            <div class="cr-meta-row">
+              <span class="cr-chip">${item.type}</span>
+              <span class="cr-chip">${item.year}</span>
+              ${item.date ? `<span class="cr-chip">${item.date}</span>` : ""}
+            </div>
+            <h2 class="cr-slide-title">${item.title}</h2>
+            ${genresText ? `<div class="cr-genres">${genresText}</div>` : ""}
+            ${shortDesc ? `<p class="cr-desc">${shortDesc}</p>` : ""}
+            <div class="cr-actions" onclick="event.stopPropagation()">
+              <button
+                type="button"
+                class="lg-btn ${saved ? "active" : ""}"
+                data-save-id="${item.id}"
+                data-save-kind="text"
+                onclick="toggleSaved(${item.id})"
+              >${saved ? "Guardado" : "Guardar"}</button>
+              <button type="button" class="lg-btn" onclick="openDetail(${item.id})">Detalles</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function createPosterCard(item) {
+      return `
+        <article
+          class="poster-only-card"
+          style="background-image: ${safeBgUrl(item.posterUrl)};"
+          aria-label="${item.title}"
+          onclick="openDetail(${item.id})"
+        ></article>
+      `;
+    }
+
+    let activeRecentDot = 0;
+    function syncRecentDots() {
+      const showcase = document.getElementById("recent-showcase");
+      const dots = document.querySelectorAll("#recent-dots .cap-dot");
+      if (!showcase || !dots.length) return;
+
+      const width = showcase.clientWidth || 1;
+      const idx = Math.round(showcase.scrollLeft / width);
+      const nextDot = Math.min(dots.length - 1, Math.max(0, idx));
+      if (nextDot === activeRecentDot) return;
+      activeRecentDot = nextDot;
+      dots.forEach((dot, i) => dot.classList.toggle("active", i === activeRecentDot));
+    }
+
+    function scrollRecentTo(index) {
+      const showcase = document.getElementById("recent-showcase");
+      if (!showcase) return;
+      showcase.scrollTo({ left: index * showcase.clientWidth, behavior: "smooth" });
+      activeRecentDot = index;
+      document.querySelectorAll("#recent-dots .cap-dot").forEach((dot, i) => {
+        dot.classList.toggle("active", i === index);
+      });
+    }
+
+    function renderRecentShowcase() {
+      const showcase = document.getElementById("recent-showcase");
+      const dotsWrap = document.getElementById("recent-dots");
+      const uniqueItems = getRecentUniqueUpToFour();
+
+      if (!uniqueItems.length) {
+        showcase.innerHTML = `<div class="empty-state" style="width: 100%; margin: 0;">No hay titulos disponibles.</div>`;
+        dotsWrap.innerHTML = "";
+        return;
+      }
+
+      showcase.innerHTML = uniqueItems.map((item, idx) => createTopSlide(item, idx)).join("");
+
+      const dotCount = uniqueItems.length;
+      if (activeRecentDot >= dotCount) activeRecentDot = 0;
+
+      dotsWrap.innerHTML = Array.from({ length: dotCount }, (_, idx) => `
+        <button
+          type="button"
+          class="cap-dot ${idx === activeRecentDot ? "active" : ""}"
+          aria-label="Opcion ${idx + 1}"
+          onclick="scrollRecentTo(${idx})"
+        ></button>
+      `).join("");
+    }
+
+    function renderHomeSections() {
+      renderRecentShowcase();
+
+      const movies = SORTED_ITEMS.filter(i => i.type === "Película");
+      const series = SORTED_ITEMS.filter(i => i.type === "Serie");
+
+      document.getElementById("movies-count").textContent = `${movies.length}`;
+      document.getElementById("movies-row").innerHTML = movies.length
+        ? movies.map(createPosterCard).join("")
+        : `<div class="empty-state" style="width: 100%;">No hay peliculas aun.</div>`;
+
+      document.getElementById("series-count").textContent = `${series.length}`;
+      document.getElementById("series-row").innerHTML = series.length
+        ? series.map(createPosterCard).join("")
+        : `<div class="empty-state" style="width: 100%;">No hay series aun.</div>`;
+
+      const yearsContainer = document.getElementById("years-sections");
+      yearsContainer.innerHTML = YEARS_SORTED.map(yr => {
+        const list = SORTED_ITEMS.filter(i => i.year === yr);
+        return `
+          <div class="section-title">
+            <span>Ano ${yr}</span>
+            <span class="section-sub">${list.length}</span>
+          </div>
+          <div class="netflix-row">
+            ${list.map(createPosterCard).join("")}
+          </div>
+        `;
+      }).join("");
+
+      dirtyViews.home = false;
+    }
+
+    let lastSearchQuery = null;
+    function renderSearch() {
+      const input = document.getElementById("search-input");
+      const rawQ = input.value.trim();
+      const q = stripAccents(rawQ);
+      if (q === lastSearchQuery && !dirtyViews.search) return;
+      lastSearchQuery = q;
+
+      const list = q
+        ? SORTED_ITEMS.filter(item => item.searchBlob.includes(q))
+        : SORTED_ITEMS;
+
+      const grid = document.getElementById("search-grid");
+      if (!list.length) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">Sin resultados para "${rawQ}".</div>`;
+      } else {
+        grid.innerHTML = list.map(createPosterCard).join("");
+      }
+      dirtyViews.search = false;
+    }
+
+    let exploreFiltersRendered = false;
+    function renderExploreFilters() {
+      document.getElementById("type-bar").innerHTML = EXPLORE_TYPES.map(t => `
+        <button
+          type="button"
+          class="lg-btn sm ${t === selectedType ? "active" : ""}"
+          style="flex-shrink: 0;"
+          onclick="selectType('${t.replace(/'/g, "\\'")}')"
+        >${t === "Película" ? "Peliculas" : t}</button>
+      `).join("");
+
+      document.getElementById("category-bar").innerHTML = EXPLORE_CATEGORIES.map(cat => `
+        <button
+          type="button"
+          class="lg-btn sm ${cat === selectedCategory ? "active" : ""}"
+          style="flex-shrink: 0;"
+          onclick="selectCategory('${cat.replace(/'/g, "\\'")}')"
+        >${cat}</button>
+      `).join("");
+
+      document.getElementById("year-bar").innerHTML = EXPLORE_YEARS.map(yr => `
+        <button
+          type="button"
+          class="lg-btn sm ${yr === selectedYear ? "active" : ""}"
+          style="flex-shrink: 0;"
+          onclick="selectYear('${yr.replace(/'/g, "\\'")}')"
+        >${yr}</button>
+      `).join("");
+
+      exploreFiltersRendered = true;
+    }
+
+    function selectType(t) {
+      selectedType = t;
+      renderExploreFilters();
+      renderExplore();
+    }
+
+    function selectCategory(cat) {
+      selectedCategory = cat;
+      renderExploreFilters();
+      renderExplore();
+    }
+
+    function selectYear(yr) {
+      selectedYear = yr;
+      renderExploreFilters();
+      renderExplore();
+    }
+
+    function renderExplore() {
+      if (!exploreFiltersRendered) renderExploreFilters();
+
+      const list = SORTED_ITEMS.filter(item => {
+        if (selectedType !== "Todos" && item.type !== selectedType) return false;
+        if (selectedCategory !== "Todas" && !item.genres.includes(selectedCategory)) return false;
+        if (selectedYear !== "Todos" && item.year !== selectedYear) return false;
+        return true;
+      });
+
+      const grid = document.getElementById("explore-grid");
+      grid.innerHTML = list.length
+        ? list.map(createPosterCard).join("")
+        : `<div class="empty-state" style="grid-column: 1 / -1;">No hay titulos con estos filtros.</div>`;
+
+      dirtyViews.explore = false;
+    }
+
+    function renderSaved() {
+      const list = SORTED_ITEMS.filter(isItemSaved);
+      const countEl = document.getElementById("saved-count");
+      if (countEl) countEl.textContent = list.length ? `${list.length}` : "";
+
+      const grid = document.getElementById("saved-grid");
+      grid.innerHTML = list.length
+        ? list.map(createPosterCard).join("")
+        : `<div class="empty-state" style="grid-column: 1 / -1;">No tienes elementos guardados.</div>`;
+
+      dirtyViews.saved = false;
+    }
+
+    const DESC_LIMIT = 95;
+    let detailExpanded = false;
+
+    function renderDetailDescription(fullText) {
+      if (!fullText) return "";
+      const needsReadMore = fullText.length > DESC_LIMIT;
+      const shownText = (!needsReadMore || detailExpanded)
+        ? fullText
+        : `${fullText.slice(0, DESC_LIMIT).trim()}...`;
+
+      return `
+        <div class="detail-desc-wrap">
+          <p class="detail-desc" id="detail-desc-text">${shownText}</p>
+          ${needsReadMore ? `
+            <button type="button" class="read-more-btn" id="btn-read-more" onclick="toggleReadMore()">
+              ${detailExpanded ? "Leer menos" : "Leer más"}
+            </button>
+          ` : ""}
+        </div>
+      `;
+    }
+
+    function toggleReadMore() {
+      const modal = document.getElementById("detail-modal");
+      const item = ITEMS_BY_ID.get(Number(modal.dataset.currentId));
+      if (!item) return;
+
+      detailExpanded = !detailExpanded;
+      const descTextEl = document.getElementById("detail-desc-text");
+      const btnEl = document.getElementById("btn-read-more");
+      if (descTextEl) {
+        descTextEl.textContent = detailExpanded
+          ? item.description
+          : `${item.description.slice(0, DESC_LIMIT).trim()}...`;
+      }
+      if (btnEl) {
+        btnEl.textContent = detailExpanded ? "Leer menos" : "Leer más";
+      }
+    }
+
+    function openDetail(id, pushNav = true) {
+      const item = ITEMS_BY_ID.get(id);
+      if (!item) return;
+
+      detailExpanded = false;
+      const modal = document.getElementById("detail-modal");
+      modal.dataset.currentId = String(id);
+      document.getElementById("detail-poster").style.backgroundImage = safeBgUrl(item.posterUrl);
+
+      const metaParts = [item.type, item.year, item.date, ...item.genres].filter(Boolean);
+      const saved = isItemSaved(item);
+
+      document.getElementById("detail-info").innerHTML = `
+        <h2>${item.title}</h2>
+        <p class="detail-meta">${metaParts.join(" · ")}</p>
+        ${renderDetailDescription(item.description)}
+        <div class="detail-cta-row">
+          <a class="lg-btn primary btn-visit-big" href="${item.watchUrl}" target="_blank" rel="noopener noreferrer">Visitar</a>
+          <button
+            type="button"
+            class="lg-btn btn-save-icon-only ${saved ? "active saved-solid" : ""}"
+            data-save-id="${item.id}"
+            data-save-kind="bookmark-solid"
+            aria-label="Guardar"
+            title="${saved ? "Guardado" : "Guardar"}"
+            onclick="toggleSaved(${item.id})"
+          >${BOOKMARK_SVG}</button>
+        </div>
+      `;
+
+      if (!modal.classList.contains("open")) {
+        modal.classList.add("open");
+        if (pushNav) {
+          history.pushState({ modalId: id, tabIndex: activeIndex }, "");
+        }
+      }
+    }
+
+    function closeDetail(e, fromPopState = false) {
+      if (e && e.target !== e.currentTarget) return;
+      const modal = document.getElementById("detail-modal");
+      if (!modal.classList.contains("open")) return;
+      modal.classList.remove("open");
+      delete modal.dataset.currentId;
+      detailExpanded = false;
+
+      if (!fromPopState && history.state && history.state.modalId) {
+        history.back();
+      }
+    }
+
+    const msgOverlay = document.getElementById("msg-overlay");
+    const btnMessages = document.getElementById("btn-messages");
+
+    function openMessagesModal() {
+      msgOverlay.classList.add("open");
+      btnMessages.classList.add("active");
+    }
+
+    function closeMessagesModal(e) {
+      if (e && e.target !== e.currentTarget) return;
+      msgOverlay.classList.remove("open");
+      btnMessages.classList.remove("active");
+    }
+
+    btnMessages.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (msgOverlay.classList.contains("open")) {
+        closeMessagesModal();
+      } else {
+        openMessagesModal();
+      }
+    });
+
+    let showcaseScrollTicking = false;
+    document.getElementById("recent-showcase").addEventListener("scroll", () => {
+      if (showcaseScrollTicking) return;
+      showcaseScrollTicking = true;
+      requestAnimationFrame(() => {
+        syncRecentDots();
+        showcaseScrollTicking = false;
+      });
+    }, { passive: true });
+
+    let searchDebounceTimer = null;
+    document.getElementById("search-input").addEventListener("input", () => {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(renderSearch, 140);
+    });
+
+    const dockWrapper = document.getElementById("dock-wrapper");
+    let lastScrollY = window.scrollY;
+    let scrollTicking = false;
+
+    function setDockHidden(hidden) {
+      dockWrapper.classList.toggle("dock-hidden", hidden);
+    }
+
+    window.addEventListener("scroll", () => {
+      if (scrollTicking) return;
+      scrollTicking = true;
+      requestAnimationFrame(() => {
+        const y = Math.max(0, window.scrollY);
+        const delta = y - lastScrollY;
+        const nearBottom = y + window.innerHeight >= document.documentElement.scrollHeight - 24;
+
+        if (isDragging) {
+          setDockHidden(false);
+        } else if (nearBottom || delta < -6 || y <= 24) {
+          setDockHidden(false);
+        } else if (delta > 8 && y > 80) {
+          setDockHidden(true);
+        }
+
+        lastScrollY = y;
+        scrollTicking = false;
+      });
+    }, { passive: true });
+
+    const navbar = document.getElementById("navbar");
+    const lens = document.getElementById("lens");
+    const navItems = Array.from(document.querySelectorAll(".nav-item"));
+    const views = Array.from(document.querySelectorAll(".view"));
+
+    const totalItems = navItems.length;
+    let activeIndex = 0;
+    let isDragging = false;
+    let currentX = 0;
+    let targetX = 0;
+    let dragOffset = 0;
+    let startPointerX = 0;
+    let hasMoved = false;
+    let rafRunning = false;
+    const navHistoryStack = [0];
+
+    let cachedMetrics = null;
+    function refreshMetrics() {
+      const navRect = navbar.getBoundingClientRect();
+      const lensWidth = isDragging ? 92 : 86;
+      const padding = 5;
+      const slotWidth = (navRect.width - padding * 2) / totalItems;
+      cachedMetrics = { navRect, lensWidth, padding, slotWidth };
+      return cachedMetrics;
+    }
+
+    function getMetrics() {
+      return cachedMetrics || refreshMetrics();
+    }
+
+    function getSnapX(index) {
+      const { lensWidth, padding, slotWidth } = getMetrics();
+      const slotCenter = padding + slotWidth * index + slotWidth / 2;
+      return slotCenter - lensWidth / 2;
+    }
+
+    function getIndexFromX(xCenter) {
+      const { padding, slotWidth } = getMetrics();
+      return Math.max(0, Math.min(totalItems - 1, Math.floor((xCenter - padding) / slotWidth)));
+    }
+
+    function startLensLoop() {
+      if (rafRunning) return;
+      rafRunning = true;
+      requestAnimationFrame(animateLens);
+    }
+
+    function renderActiveViewIfNeeded(targetViewId) {
+      if (targetViewId === "view-home" && dirtyViews.home) renderHomeSections();
+      else if (targetViewId === "view-search" && dirtyViews.search) renderSearch();
+      else if (targetViewId === "view-explore" && dirtyViews.explore) renderExplore();
+      else if (targetViewId === "view-saved" && dirtyViews.saved) renderSaved();
+    }
+
+    function applyTabView(index, recordHistory = true) {
+      if (index < 0 || index >= totalItems) return;
+
+      if (index !== activeIndex) {
+        activeIndex = index;
+        navItems.forEach((item, i) => item.classList.toggle("active", i === activeIndex));
+        const targetViewId = navItems[activeIndex].dataset.view;
+        views.forEach(view => view.classList.toggle("active", view.id === targetViewId));
+
+        renderActiveViewIfNeeded(targetViewId);
+
+        if (recordHistory) {
+          if (navHistoryStack[navHistoryStack.length - 1] !== activeIndex) {
+            navHistoryStack.push(activeIndex);
+          }
+          history.pushState({ tabIndex: activeIndex }, "");
+        }
+      }
+
+      setDockHidden(false);
+      targetX = getSnapX(activeIndex);
+      startLensLoop();
+    }
+
+    function animateLens() {
+      const stiffness = isDragging ? 0.45 : 0.24;
+      const diff = targetX - currentX;
+      currentX += diff * stiffness;
+
+      const stretchX = 1 + Math.min(Math.abs(diff) * 0.004, 0.1);
+      const squashY = 1 - Math.min(Math.abs(diff) * 0.0018, 0.04);
+
+      lens.style.transform = `translate3d(${currentX.toFixed(2)}px, 0, 0) scale(${stretchX.toFixed(3)}, ${squashY.toFixed(3)})`;
+
+      if (isDragging || Math.abs(diff) > 0.2) {
+        requestAnimationFrame(animateLens);
+      } else {
+        currentX = targetX;
+        lens.style.transform = `translate3d(${currentX.toFixed(2)}px, 0, 0) scale(1, 1)`;
+        rafRunning = false;
+      }
+    }
+
+    navbar.addEventListener("pointerdown", (e) => {
+      navbar.setPointerCapture(e.pointerId);
+      isDragging = true;
+      setDockHidden(false);
+      hasMoved = false;
+      startPointerX = e.clientX;
+      navbar.classList.add("dragging");
+
+      const { navRect, lensWidth } = refreshMetrics();
+      const pointerLocalX = e.clientX - navRect.left;
+
+      if (pointerLocalX >= currentX && pointerLocalX <= currentX + lensWidth) {
+        dragOffset = pointerLocalX - currentX;
+      } else {
+        dragOffset = lensWidth / 2;
+        targetX = Math.max(0, Math.min(navRect.width - lensWidth, pointerLocalX - dragOffset));
+      }
+      startLensLoop();
+    });
+
+    navbar.addEventListener("pointermove", (e) => {
+      if (!isDragging) return;
+      if (Math.abs(e.clientX - startPointerX) > 6) hasMoved = true;
+
+      const { navRect, lensWidth } = getMetrics();
+      const pointerLocalX = e.clientX - navRect.left;
+
+      targetX = Math.max(-2, Math.min(navRect.width - lensWidth + 2, pointerLocalX - dragOffset));
+      startLensLoop();
+    });
+
+    function endDrag(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      navbar.classList.remove("dragging");
+
+      const { navRect, lensWidth } = refreshMetrics();
+      let chosenIndex = activeIndex;
+
+      if (!hasMoved && e) {
+        const pointerLocalX = e.clientX - navRect.left;
+        chosenIndex = getIndexFromX(pointerLocalX);
+      } else {
+        const lensCenter = targetX + lensWidth / 2;
+        chosenIndex = getIndexFromX(lensCenter);
+      }
+
+      applyTabView(chosenIndex, true);
+    }
+
+    navbar.addEventListener("pointerup", endDrag);
+    navbar.addEventListener("pointercancel", endDrag);
+
+    window.addEventListener("resize", () => {
+      refreshMetrics();
+      targetX = getSnapX(activeIndex);
+      startLensLoop();
+    });
+
+    window.addEventListener("popstate", () => {
+      if (msgOverlay.classList.contains("open")) {
+        closeMessagesModal();
+        history.pushState({ guard: true, tabIndex: activeIndex }, "");
+        return;
+      }
+
+      const modal = document.getElementById("detail-modal");
+      if (modal.classList.contains("open")) {
+        closeDetail(null, true);
+        history.pushState({ guard: true, tabIndex: activeIndex }, "");
+        return;
+      }
+
+      if (navHistoryStack.length > 1) {
+        navHistoryStack.pop();
+        const prevTab = navHistoryStack[navHistoryStack.length - 1];
+        applyTabView(prevTab, false);
+      } else if (activeIndex !== 0) {
+        applyTabView(0, false);
+      }
+
+      history.pushState({ guard: true, tabIndex: activeIndex }, "");
+    });
+
+    (async function initApp() {
+      history.replaceState({ guard: true, tabIndex: 0 }, "");
+      history.pushState({ guard: true, tabIndex: 0 }, "");
+
+      await loadSavedKeys();
+      renderHomeSections();
+      refreshMetrics();
+      currentX = getSnapX(0);
+      targetX = currentX;
+      lens.style.transform = `translate3d(${currentX.toFixed(2)}px, 0, 0) scale(1, 1)`;
+    })();
+  </script>
+</body>
+</html>
